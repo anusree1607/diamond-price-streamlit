@@ -1,22 +1,21 @@
 import streamlit as st
 import pickle
-import pandas as pd
 import numpy as np
-from sklearn.preprocessing import OrdinalEncoder
 
-# Load model and scaler
+# Load model, scaler, and encoder
 with open('model.pkl', 'rb') as f:
     model = pickle.load(f)
 
 with open('scaler.pkl', 'rb') as f:
     scaler = pickle.load(f)
 
-# Define custom orders for ordinal encoding
+with open('encoder.pkl', 'rb') as f:
+    encoder = pickle.load(f)
+
+# Category orders (for UI only)
 cut_order = ['Fair', 'Good', 'Very Good', 'Premium', 'Ideal']
 color_order = ['J', 'I', 'H', 'G', 'F', 'E', 'D']
 clarity_order = ['I1', 'SI2', 'SI1', 'VS2', 'VS1', 'VVS2', 'VVS1', 'IF']
-
-encoder = OrdinalEncoder(categories=[cut_order, color_order, clarity_order])
 
 st.title("💎 Diamond Price Predictor")
 
@@ -31,21 +30,15 @@ color = st.selectbox("Color", color_order)
 clarity = st.selectbox("Clarity", clarity_order)
 
 if st.button("Predict"):
-    # Calculate volume
     volume = x * y * z
-
-    # Encode categorical features
     cat_input = [[cut, color, clarity]]
-    encoded_cat = encoder.transform(cat_input)
-
     
-    # Combine with numeric features
+    encoded_cat = encoder.transform(cat_input)
+    
+    # Combine all features
     input_features = np.array([[carat, encoded_cat[0][0], encoded_cat[0][1], encoded_cat[0][2], volume]])
-
-    # Standardize features
     scaled_input = scaler.transform(input_features)
-
-    # Predict
+    
     prediction = model.predict(scaled_input)
     st.success(f"Estimated Price: ${prediction[0]:,.2f}")
 
